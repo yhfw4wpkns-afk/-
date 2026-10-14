@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>検索サイト</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+    <!-- ヘッダー -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-xl font-bold text-blue-600">マイサイト</h1>
+            
+            <!-- 検索フォーム（onsubmitでページリロードを確実に防ぎます） -->
+            <form onsubmit="return false;" class="w-full sm:w-96">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="キーワードで検索..." 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    oninput="filterItems()"
+                >
+            </form>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- 左側：検索結果のリスト (2カラム分) -->
+        <div class="md:col-span-2">
+            <h2 class="text-lg font-semibold mb-4 text-gray-700">記事一覧</h2>
+            <div id="itemList" class="space-y-4">
+                <!-- JavaScriptでここにアイテムが動的に表示されます -->
+            </div>
+            <p id="noResult" class="hidden text-gray-500 text-center py-8">該当する記事が見つかりませんでした。</p>
+        </div>
+
+        <!-- 右側：詳細表示パネル (1カラム分) -->
+        <div class="md:col-span-1">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 sticky top-24">
+                <h2 class="text-lg font-semibold mb-4 text-gray-700 border-b pb-2">詳細情報</h2>
+                <div id="detailView">
+                    <p class="text-gray-400 text-sm">左側のリストから項目をクリックすると、ここに詳細が表示されます。</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- フッター -->
+    <footer class="bg-white border-t border-gray-200 py-4 text-center text-xs text-gray-400">
+        &copy; 2026 マイサイト
+    </footer>
+
+    <!-- JavaScript：データの管理と検索・詳細表示の制御 -->
+    <script>
+        // サンプルデータ（ここに好きなだけ追加できます）
+        const items = [
+            { id: 1, title: "HTMLの基本構造について", category: "HTML", content: "HTMLはWebページを作るための骨組みとなる言語です。タグを使って見出しや段落を配置します。" },
+            { id: 2, title: "CSSでデザインを整える方法", category: "CSS", content: "CSSを使うことで、文字の色、背景、レイアウトなど、Webサイトの見た目を美しく装飾することができます。" },
+            { id: 3, title: "JavaScriptで動きをつける", category: "JavaScript", content: "ボタンをクリックしたときにポップアップを出したり、ページをリロードせずにデータを書き換えたりできます。" },
+            { id: 4, title: "Netlifyを使った簡単なサイト公開", category: "ホスティング", content: "作ったHTMLファイルをドラッグ＆ドロップするだけで、数秒で世界中にWebサイトを公開できる便利なサービスです。" },
+            { id: 5, title: "SPA（シングルページアプリ）の仕組み", category: "テクニック", content: "ページを移動（リロード）せずに、JavaScriptで画面の一部を書き換えることで、サクサク動くWebアプリを作れます。" }
+        ];
+
+        // 初期表示
+        window.addEventListener('DOMContentLoaded', () => {
+            renderList(items);
+        });
+
+        // リストを描画する関数
+        function renderList(data) {
+            const listContainer = document.getElementById('itemList');
+            const noResult = document.getElementById('noResult');
+            listContainer.innerHTML = '';
+
+            if (data.length === 0) {
+                noResult.classList.remove('hidden');
+                return;
+            } else {
+                noResult.classList.add('hidden');
+            }
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:border-blue-400 cursor-pointer transition-all";
+                card.innerHTML = `
+                    <span class="inline-block px-2.5 py-1 bg-blue-50 text-blue-600 text-xs font-medium rounded-full mb-2">${item.category}</span>
+                    <h3 class="font-bold text-gray-800 text-lg mb-1">${item.title}</h3>
+                    <p class="text-gray-500 text-sm line-clamp-2">${item.content}</p>
+                `;
+                // カードをクリックしたときの処理（URLは変わらず、右側の詳細が切り替わる）
+                card.addEventListener('click', () => {
+                    showDetail(item);
+                });
+                listContainer.appendChild(card);
+            });
+        }
+
+        // リアルタイム検索（入力するたびに実行）
+        function filterItems() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = items.filter(item => 
+                item.title.toLowerCase().includes(keyword) || 
+                item.content.toLowerCase().includes(keyword) ||
+                item.category.toLowerCase().includes(keyword)
+            );
+            renderList(filtered);
+        }
+
+        // 右側のパネルに詳細を表示する関数
+        function showDetail(item) {
+            const detailView = document.getElementById('detailView');
+            detailView.innerHTML = `
+                <span class="inline-block px-2.5 py-1 bg-blue-50 text-blue-600 text-xs font-medium rounded-full mb-2">${item.category}</span>
+                <h3 class="font-bold text-gray-800 text-xl mb-3">${item.title}</h3>
+                <p class="text-gray-600 text-sm leading-relaxed">${item.content}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
